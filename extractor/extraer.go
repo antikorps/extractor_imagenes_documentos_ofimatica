@@ -34,9 +34,9 @@ func descomprimir(archivo Archivo, destino string, multiple bool, canal chan err
 	defer zip.Close()
 
 	for _, v := range zip.File {
-		// Rutas en Linux xl/media/image1.png, quizá en Windows cambian
+		// Rutas en Linux xl/media/image1.png
 		rutaV, nombreV := filepath.Split(v.Name)
-		partesV := strings.Split(rutaV, string(os.PathSeparator))
+		partesV := strings.Split(rutaV, "/")
 		if len(partesV) < 2 {
 			continue
 		}
