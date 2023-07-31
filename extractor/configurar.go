@@ -6,16 +6,16 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/ncruces/zenity"
 )
 
-func configurarMedianteDialogos() (string, string) {
-	presentacionMensaje := `¡Hola!
+func configurarMedianteDialogos(extensionesValidas []string) (string, string) {
+	presentacionMensaje := fmt.Sprintf(`¡Hola!
 
 Este extractor de imágenes sirve para archivos:
-   - docx
-   - xlsx
+%v
 
 Existen 2 posibilidades de extracción:
    - individual (un único archivo)
@@ -26,13 +26,16 @@ Luego tendrás que seleccionar el archivo o carpeta.
 Finalmente deberás seleccionar un directorio de destino.
 
 ===============
-* Implica búsqueda recursiva o en subdirectorios`
+* Implica búsqueda recursiva o en subdirectorios`, strings.Join(extensionesValidas, "\n"))
 
 	presentacionError := zenity.Info(presentacionMensaje,
 		zenity.Title("Presentación"),
 		zenity.Width(600),
 		zenity.InfoIcon)
 	if presentacionError != nil {
+		if presentacionError == zenity.ErrCanceled {
+			os.Exit(0)
+		}
 		log.Fatalln("error crítico en el diálogo de presentación", presentacionError)
 	}
 
@@ -49,9 +52,14 @@ Finalmente deberás seleccionar un directorio de destino.
 	var origen string
 	var origenError error
 	if tipo == "individual" {
+		var extensionesSelector []string
+		for _, ext := range extensionesValidas {
+			extensionSelector := fmt.Sprintf("*%v", ext)
+			extensionesSelector = append(extensionesSelector, extensionSelector)
+		}
 		origen, origenError = zenity.SelectFile(
 			zenity.FileFilters{
-				{Name: "Documentos de ofimática", Patterns: []string{"*.docx", "*.xlsx"}, CaseFold: false},
+				{Name: "Documentos de ofimática", Patterns: extensionesSelector, CaseFold: false},
 			})
 		if origenError != nil {
 			if origenError == zenity.ErrCanceled {
@@ -83,7 +91,7 @@ Finalmente deberás seleccionar un directorio de destino.
 	return origen, destino
 }
 
-func obtenerArchivos(origen string) ([]Archivo, error) {
+func obtenerArchivos(origen string, extensionesValidas []string) ([]Archivo, error) {
 	var archivos []Archivo
 
 	info, infoError := os.Stat(origen)
@@ -109,9 +117,8 @@ func obtenerArchivos(origen string) ([]Archivo, error) {
 		if info.IsDir() {
 			return nil
 		}
-		extensionValidas := []string{".docx", ".xlsx"}
 		extension := filepath.Ext(ruta)
-		if !contiene(extensionValidas, extension) {
+		if !contiene(extensionesValidas, extension) {
 			return nil
 		}
 		archivos = append(archivos, Archivo{
@@ -128,14 +135,14 @@ func obtenerArchivos(origen string) ([]Archivo, error) {
 
 }
 
-func Configurar(origen, destino string) Extractor {
+func Configurar(origen, destino string, extensionesValidas []string) Extractor {
 	var dialogos bool
 	var multiple bool
 	if origen == "" || destino == "" {
-		origen, destino = configurarMedianteDialogos()
+		origen, destino = configurarMedianteDialogos(extensionesValidas)
 		dialogos = true
 	}
-	archivos, archivosError := obtenerArchivos(origen)
+	archivos, archivosError := obtenerArchivos(origen, extensionesValidas)
 	if archivosError != nil {
 		if dialogos {
 			zenity.Info(archivosError.Error(),

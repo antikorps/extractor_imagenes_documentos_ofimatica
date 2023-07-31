@@ -1,5 +1,10 @@
 # Extractor de imágenes para documentos de ofimática
-Utilidad para extraer automáticamente las imágenes incorporadas en archivos de ofimática con extensión .dotx o .xlsx
+Utilidad para extraer automáticamente las imágenes incorporadas en archivos de ofimática con las siguientes extensiones:
+- .docx
+- .dotx
+- .xlsx
+- .odt
+- .ods
 
 Puede usarse para un archivo concretos o para buscar todos los archivos coincidentes en un directorio (incluyendo subdirectorios)
 

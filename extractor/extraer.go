@@ -36,11 +36,15 @@ func descomprimir(archivo Archivo, destino string, multiple bool, canal chan err
 	for _, v := range zip.File {
 		// Rutas en Linux xl/media/image1.png
 		rutaV, nombreV := filepath.Split(v.Name)
-		partesV := strings.Split(rutaV, "/")
-		if len(partesV) < 2 {
-			continue
+
+		rutasAceptadas := []string{"xl/media/", "word/media/", "Pictures/"}
+		var aceptado bool
+		for _, rutaAceptada := range rutasAceptadas {
+			if strings.HasPrefix(rutaV, rutaAceptada) {
+				aceptado = true
+			}
 		}
-		if partesV[1] != "media" {
+		if !aceptado {
 			continue
 		}
 
